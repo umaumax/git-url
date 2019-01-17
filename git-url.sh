@@ -12,6 +12,7 @@ function main() {
 	local url=$(git config remote.origin.url)
 	[[ -z $url ]] && echo "$0 [filepath] [line no]" && return 1
 	local filepath=$1
+	[[ -n $filepath ]] && local filepath=$(git ls-files --full-name $filepath)
 	local lineno=$2
 
 	local ret=$(echo $url | sed -E 's@^[a-z]+://@@' | sed -E 's:^[a-zA-z._0-9]+@::' | sed -E 's:\.git$::')
