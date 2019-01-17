@@ -36,7 +36,7 @@ function main() {
 	local web_link="$web_url/gitweb?p=$repo.git;f=$filepath;hb=refs/heads/$branch#l$lineno"
 	[[ $web_type == "github" ]] && local web_link="$web_url/$repo/$object/$branch/$filepath#L$lineno"
 	[[ $web_type == "gitlab" ]] && local web_link="$web_url/$repo/blob/$branch/$filepath#L$lineno"
-	echo $web_link
+	echo "https://$web_link"
 }
 main "$@"
 
