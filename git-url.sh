@@ -32,9 +32,13 @@ function main() {
 	# NOTE: if local branch -> set master branch (default)
 	git show-ref --quiet --verify -- "refs/remotes/origin/$branch" || local branch="master"
 	local object='blob'
-	[[ -z $filepath ]] && local object='tree'
-
-	local web_link="$web_url/gitweb?p=$repo.git;f=$filepath;hb=refs/heads/$branch#l$lineno"
+	local gerrit_f=";f=$filepath"
+	# NOTE: no file
+	if [[ -z $filepath ]]; then
+		local gerrit_f=""
+		local object='tree'
+	fi
+	local web_link="$web_url/gitweb?p=$repo.git$gerrit_f;hb=refs/heads/$branch#l$lineno"
 	[[ $web_type == "github" ]] && local web_link="$web_url/$repo/$object/$branch/$filepath#L$lineno"
 	[[ $web_type == "gitlab" ]] && local web_link="$web_url/$repo/blob/$branch/$filepath#L$lineno"
 	# NOTE: default https://
