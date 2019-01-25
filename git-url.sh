@@ -4,6 +4,9 @@ BLACK="\033[0;30m" RED="\033[0;31m" GREEN="\033[0;32m" YELLOW="\033[0;33m" BLUE=
 function echo() { command echo -e "$@"; }
 
 function main() {
+	# NOTE: to avoid 'sed: -e expression #1, char 20: Invalid range end'
+	LANG=ja_JP.UTF-8
+
 	if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 		echo "${RED}no git repo here!${DEFAULT}" >&2
 		return 1
