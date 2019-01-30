@@ -13,7 +13,10 @@ function main() {
 	fi
 
 	local url=$(git config remote.origin.url)
-	[[ -z $url ]] && echo "$0 [filepath] [line no]" && return 1
+	[[ -z $url ]] && echo "$0 [--tree|--commits] [filepath] [line no]" && return 1
+	local no_filepath_default_object='tree'
+	[[ $1 == '--tree' ]] && shift
+	[[ $1 == '--commits' ]] && local no_filepath_default_object='commits' && shift
 	local filepath=$1
 	[[ -n $filepath ]] && local filepath=$(git ls-files --full-name $filepath)
 	local lineno=$2
@@ -38,12 +41,23 @@ function main() {
 	local gerrit_f=";f=$filepath"
 	# NOTE: no file
 	if [[ -z $filepath ]]; then
+		local object=$no_filepath_default_object
 		local gerrit_f=""
-		local object='tree'
 	fi
-	local web_link="$web_url/gitweb?p=$repo.git$gerrit_f;hb=refs/heads/$branch#l$lineno"
-	[[ $web_type == "github" ]] && local web_link="$web_url/$repo/$object/$branch/$filepath#L$lineno"
-	[[ $web_type == "gitlab" ]] && local web_link="$web_url/$repo/blob/$branch/$filepath#L$lineno"
+	if [[ $web_type == "github" ]]; then
+		local web_link="$web_url/$repo/$object/$branch/$filepath"
+		local line_prefix='#L'
+	elif [[ $web_type == "gitlab" ]]; then
+		local web_link="$web_url/$repo/blob/$branch/$filepath"
+		local line_prefix='#L'
+	else # gerrit?
+		local web_link="$web_url/gitweb?p=$repo.git$gerrit_f;hb=refs/heads/$branch"
+		local line_prefix='#l'
+	fi
+	if [[ -n $lineno ]]; then
+		local web_link="${web_link}${line_prefix}${lineno}"
+	fi
+
 	# NOTE: default https://
 	[[ ! $web_link =~ ^(https?|ftp|file):// ]] && local web_link="https://$web_link"
 	echo "$web_link"
