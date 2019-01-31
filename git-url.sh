@@ -48,7 +48,7 @@ function main() {
 		local web_link="$web_url/$repo/$object/$branch/$filepath"
 		local line_prefix='#L'
 	elif [[ $web_type == "gitlab" ]]; then
-		local web_link="$web_url/$repo/blob/$branch/$filepath"
+		local web_link="$web_url/$repo/$object/$branch/$filepath"
 		local line_prefix='#L'
 	else # gerrit?
 		local web_link="$web_url/gitweb?p=$repo.git$gerrit_f;hb=refs/heads/$branch"
