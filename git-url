@@ -18,7 +18,8 @@ function main() {
   [[ $1 == '--tree' ]] && shift
   [[ $1 == '--commits' ]] && no_filepath_default_object='commits' && shift
   local filepath=$1
-  [[ -z $filepath ]] && filepath=$(git ls-files --full-name $filepath)
+  [[ $filepath =~ ^.(/+.)*$ ]] && filepath=''
+  [[ -n $filepath ]] && filepath=$(git ls-files --full-name $filepath)
   local lineno=$2
 
   local ret=$(echo $url | sed -E 's@^[a-z]+://@@' | sed -E 's:^[a-zA-z._0-9]+@::' | sed -E 's:\.git$::')
