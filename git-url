@@ -37,7 +37,7 @@ function main() {
 
   local branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
   # NOTE: if local branch -> set near remote branch
-  if git show-ref --quiet --verify -- "refs/remotes/origin/$branch"; then
+  if ! git show-ref --quiet --verify -- "refs/remotes/origin/$branch"; then
     branch=$(git rev-list --format='%D' HEAD --max-parents=1 | grep -o 'origin/[^ ]*' | sed -e 's:^origin/::g' -e 's/,//g' | head -n 1 | cut -d' ' -f1)
     [[ -z $branch ]] && branch="master"
   fi
