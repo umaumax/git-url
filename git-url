@@ -18,8 +18,14 @@ function main() {
   [[ $1 == '--tree' ]] && shift
   [[ $1 == '--commits' ]] && no_filepath_default_object='commits' && shift
   local filepath=$1
-  [[ $filepath =~ ^.(/+.)*$ ]] && filepath=''
-  [[ -n $filepath ]] && filepath=$(git ls-files --full-name $filepath)
+  if [[ -n $filepath ]]; then
+    if [[ ! -e $filepath ]]; then
+      echo 1>&2 "no such file or dir '$filepath'"
+      return 1
+    fi
+    filepath=$(git rev-parse --show-prefix $filepath | tr -d '\n')
+  fi
+  [[ $filepath == '.' ]] && filepath=''
   local lineno=$2
 
   local ret=$(echo $url | sed -E 's@^[a-z]+://@@' | sed -E 's:^[a-zA-z._0-9]+@::' | sed -E 's:\.git$::')
