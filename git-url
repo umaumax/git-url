@@ -31,7 +31,7 @@ function main() {
   local ret=$(echo $url | sed -E 's@^[a-z]+://@@' | sed -E 's:^[a-zA-z._0-9]+@::' | sed -E 's:\.git$::')
   local host_repo=$(echo $ret | sed -E 's@^([^:/]*)((:[0-9]+)/|:([^/]+/)|/)(.*)$@\1 \4\5@')
   local host=$(echo $host_repo | awk '{print $1}')
-  local repo=$(echo $host_repo | awk '{print $2}')
+  local repo=$(basename $(echo $host_repo | awk '{print $2}'))
   [[ -z $host ]] && echo "$0 parse error $ret" && return 1
 
   # NOTE: setting file ~/.ssh/config
@@ -40,12 +40,20 @@ function main() {
   local web_type='gerrit'
   echo $web_url | grep -q github && web_type='github'
   echo $web_url | grep -q gitlab && web_type='gitlab'
+  echo $web_url | grep -q bitbucket && web_type='bitbucket'
 
+  local refs=""
   local branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
   # NOTE: if local branch -> set near remote branch
   if ! git show-ref --quiet --verify -- "refs/remotes/origin/$branch"; then
     branch=$(git rev-list --format='%D' HEAD --max-parents=1 | grep -o 'origin/[^ ]*' | sed -e 's:^origin/::g' -e 's/,//g' | head -n 1 | cut -d' ' -f1)
     [[ -z $branch ]] && branch="master"
+  fi
+  refs="$branch"
+  # tag is hight priority
+  local tag=$(git describe --tags 2>/dev/null)
+  if [[ -n "$tag" ]]; then
+    refs="refs/tags/$tag"
   fi
 
   local object='blob'
@@ -56,13 +64,16 @@ function main() {
     local gerrit_f=""
   fi
   if [[ $web_type == "github" ]]; then
-    local web_link="$web_url/$repo/$object/$branch/$filepath"
+    local web_link="$web_url/$repo/$object/$refs/$filepath"
     local line_prefix='#L'
   elif [[ $web_type == "gitlab" ]]; then
-    local web_link="$web_url/$repo/$object/$branch/$filepath"
+    local web_link="$web_url/$repo/$object/$refs/$filepath"
     local line_prefix='#L'
+  elif [[ $web_type == "bitbucket" ]]; then
+    local web_link="$web_url/$repo/browse/$filepath?at=$refs"
+    local line_prefix='#'
   else # gerrit?
-    local web_link="$web_url/gitweb?p=$repo.git$gerrit_f;hb=refs/heads/$branch"
+    local web_link="$web_url/gitweb?p=$repo.git$gerrit_f;hb=refs/heads/$refs"
     local line_prefix='#l'
   fi
   if [[ -n $lineno ]]; then
