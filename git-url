@@ -13,8 +13,10 @@ function main() {
   fi
 
   local url=$(git config remote.origin.url)
-  [[ -z $url ]] && echo "$0 [--tree|--commits] [filepath] [line no]" && return 1
+  local branch=''
+  [[ -z $url ]] && echo "$0 [--branch branch] [--tree|--commits] [filepath] [line no]" && return 1
   local no_filepath_default_object='tree'
+  [[ $1 == '--branch' ]] && branch="$2" && shift 2
   [[ $1 == '--tree' ]] && shift
   [[ $1 == '--commits' ]] && no_filepath_default_object='commits' && shift
   local filepath=$1
@@ -46,11 +48,13 @@ function main() {
   echo $web_url | grep -q bitbucket && web_type='bitbucket'
 
   local refs=""
-  local branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
-  # NOTE: if local branch -> set near remote branch
-  if ! git show-ref --quiet --verify -- "refs/remotes/origin/$branch"; then
-    branch=$(git rev-list --format='%D' HEAD --max-parents=1 | grep -o 'origin/[^ ]*' | sed -e 's:^origin/::g' -e 's/,//g' | head -n 1 | cut -d' ' -f1)
-    [[ -z $branch ]] && branch="master"
+  if [[ -z $branch ]]; then
+    branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
+    # NOTE: if local branch -> set near remote branch
+    if ! git show-ref --quiet --verify -- "refs/remotes/origin/$branch"; then
+      branch=$(git rev-list --format='%D' HEAD --max-parents=1 | grep -o 'origin/[^ ]*' | sed -e 's:^origin/::g' -e 's/,//g' | head -n 1 | cut -d' ' -f1)
+      [[ -z $branch ]] && branch="master"
+    fi
   fi
   refs="$branch"
   # tag is hight priority
