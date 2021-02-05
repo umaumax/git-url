@@ -4,7 +4,7 @@ BLACK="\033[0;30m" RED="\033[0;31m" GREEN="\033[0;32m" YELLOW="\033[0;33m" BLUE=
 function echo() { command echo -e "$@"; }
 
 function git() {
-  command git -C "$GITURL_REPODIR" "$@"
+  command git -C "$GITURL_WORKING_DIR" "$@"
 }
 
 function main() {
@@ -16,15 +16,16 @@ function main() {
   [[ $1 == '--branch' ]] && branch="$2" && shift 2
   [[ $1 == '--tree' ]] && shift
   [[ $1 == '--commits' ]] && no_filepath_default_object='commits' && shift
-  GITURL_REPODIR="."
+  GITURL_WORKING_DIR="."
   local filepath=$1
   if [[ -n $filepath ]]; then
     if [[ ! -e $filepath ]]; then
       echo 1>&2 "no such file or dir '$filepath'"
       return 1
     fi
-    GITURL_REPODIR="$(dirname "$filepath")"
-    filepath=$(git rev-parse --show-prefix $filepath | tr -d '\n')
+    GITURL_WORKING_DIR="$(dirname "$filepath")"
+    # get git relative filepath
+    filepath="$(git rev-parse --show-prefix "$(basename "$filepath")" | awk 'NR==2')"
   fi
   [[ $filepath == '.' ]] && filepath=''
   local lineno=$2
