@@ -3,32 +3,38 @@
 BLACK="\033[0;30m" RED="\033[0;31m" GREEN="\033[0;32m" YELLOW="\033[0;33m" BLUE="\033[0;34m" PURPLE="\033[0;35m" LIGHT_BLUE="\033[0;36m" WHITE="\033[0;37m" GRAY="\033[0;39m" DEFAULT="\033[0m"
 function echo() { command echo -e "$@"; }
 
+function git() {
+  command git -C "$GITURL_REPODIR" "$@"
+}
+
 function main() {
   # NOTE: to avoid 'sed: -e expression #1, char 20: Invalid range end'
   LANG=ja_JP.UTF-8
 
-  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "${RED}no git repo here!${DEFAULT}" >&2
-    return 1
-  fi
-
-  local url=$(git config remote.origin.url)
   local branch=''
-  [[ -z $url ]] && echo "$0 [--branch branch] [--tree|--commits] [filepath] [line no]" && return 1
   local no_filepath_default_object='tree'
   [[ $1 == '--branch' ]] && branch="$2" && shift 2
   [[ $1 == '--tree' ]] && shift
   [[ $1 == '--commits' ]] && no_filepath_default_object='commits' && shift
+  GITURL_REPODIR="."
   local filepath=$1
   if [[ -n $filepath ]]; then
     if [[ ! -e $filepath ]]; then
       echo 1>&2 "no such file or dir '$filepath'"
       return 1
     fi
+    GITURL_REPODIR="$(dirname "$filepath")"
     filepath=$(git rev-parse --show-prefix $filepath | tr -d '\n')
   fi
   [[ $filepath == '.' ]] && filepath=''
   local lineno=$2
+
+  local url=$(git config remote.origin.url)
+  [[ -z $url ]] && echo "$0 [--branch branch] [--tree|--commits] [filepath] [line no]" && return 1
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "${RED}no git repo here!${DEFAULT}" >&2
+    return 1
+  fi
 
   local ret=$(echo $url | sed -E 's@^[a-z]+://@@' | sed -E 's:^[a-zA-z._0-9]+@::' | sed -E 's:\.git$::')
   local host_repo=$(echo $ret | sed -E 's@^([^:/]*)((:[0-9]+)/|:([^/]+/)|/)(.*)$@\1 \4\5@')
