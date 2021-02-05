@@ -25,7 +25,7 @@ function main() {
     fi
     GITURL_WORKING_DIR="$(dirname "$filepath")"
     # get git relative filepath
-    filepath="$(git rev-parse --show-prefix "$(basename "$filepath")" | awk 'NR==2')"
+    filepath="$(git rev-parse --show-prefix "$(basename "$filepath")" | tr -d '\n')"
   fi
   [[ $filepath == '.' ]] && filepath=''
   local lineno=$2
